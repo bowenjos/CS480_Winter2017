@@ -6,13 +6,32 @@
 
 using namespace std;
 
+class TreeNode 
+{
+	public: 
+		int lineNumber;
+		int nValue;
+		string sValue;
+		int nodeType;
+		int typeSpecifier;
+		string rename;
+		bool visited;
+
+		TreeNode *C1;
+		TreeNode *C2;
+		TreeNode *C3;
+		TreeNode *sibling;
+};
+
 class scanner
 {
 	public:
 		int setUpFile(char *myFile);
-		void getToken(); 	
+		char* getToken();
+		int checkSourceFile();	
 	private:
 		ifstream sourceFile;
+		char cline[100];
 };
 
 int scanner::setUpFile(char *myFile)
@@ -28,26 +47,66 @@ int scanner::setUpFile(char *myFile)
 	}
 }
 
-void scanner::getToken()
+char* scanner::getToken()
 {
 	string line;
-	char cline[100];
 	char *token;
 
-	while(!sourceFile.eof()) {
+	token = strtok(NULL, " \t\r\a\n");
+	if(token != NULL){
+		return token;
+	}else{
 		getline(sourceFile, line);
 		strcpy(cline, line.c_str());
 		token = strtok(cline, " \t\r\a\n");
-		while(token != NULL) {
-			cout << chk << endl;
-			token = strtok(NULL, " \t\r\a\n");
-		}
-	}
-
-	return;
+		return token;
+	}	
 }
 
+int scanner::checksourcefile()
+{
+	if(!sourcefile.eof())
+		return 1;
+	else
+		return 0;
+}
 
+class parser
+{
+	public:	
+		TreeNode programFunc(); //declListFunc
+		TreeNode declListFunc(); //declListFunc declFunc | declFunc 
+		TreeNode declFunc(); //varDeclFunc | funDeclFunc
+		TreeNode varDeclFunc(); //typeSpec ID ; | typeSpec ID [ NUM ] ;
+		// typeSpec -> int | void
+		TreeNode funDeclFunc(); //typeSpec ID ( params ) compoundStmt
+		TreeNode paramsFunc(); //paramListFunc | void
+		TreeNode paramListFunc(); //paramListFunc, paramFunc | paramFunc
+		TreeNode paramFunc(); //typeSpec ID | typeSpec ID [ ]
+		TreeNode compoundStmtFunc(); // { localDeclFunc stmtListFunc }
+		TreeNode localDeclFunc(); // localDeclFunc varDeclFunc | empty
+		TreeNode stmtListFunc(); // stmtListFunc stmtFunc | empty
+		TreeNode stmtFunc(); // expressStmtFunc | compoundStmtFunc | selectStmtFunc | iterStmtFunc | returnStmtFunc
+		TreeNode expressStmtFunc(); //expressionFunc ; | ;
+		TreeNode selectStmtFunc(); //if ( expressionFunc ) stmtFunc | if ( expressionFunc ) stmtFunc else stmtFunc
+		TreeNode iterStmtFunc(); //while ( expressionFunc ) stmtFunc
+		TreeNode returnStmtFunc(); //return ; | return expressionFunc ;
+		TreeNode expressionFunc(); //varFunc = expressionFunc | simpleExprFunc 
+		TreeNode varFunc(); //ID | ID [ expressionFunc ]
+		TreeNode simpleExprFunc(); //addExprFunc relop addExprFunc | addExprFunc
+		// relop -> <= | < | > | >= | == | !=
+		TreeNode addExprFunc(); //addExprFun addop termFunc | termFunc
+		// addop -> + | -
+		TreeNode termFunc(); //termFunc mulop factorFunc | factorFunc
+		// mulop -> * | /
+		TreeNode factorFun(); //( expressionFunc ) | varFunc | callFunc | num
+		TreeNode callFunc(); //ID ( argsFunc )
+		TreeNode argsFunc(); //argsListFunc | empty
+		TreeNode argsListFunc(); //argsListFunc , expressionFunc | expressionFunc
+	private:
+		TreeNode root; 
+
+};
 
 int checkArguments( int argc, char *argv[], char **myFile)
 {
@@ -70,6 +129,7 @@ int main(int argc, char *argv[])
 
 	scanner scan;
 	char* myFile;
+	char* token;
 
 	if(checkArguments(argc, argv, &myFile) == -1) {
 		return -1;
@@ -80,8 +140,12 @@ int main(int argc, char *argv[])
 	if(scan.setUpFile(myFile) == -1) {
 		return -1;
 	}
-
-	scan.getToken();
+	
+	
+	while(scan.checkSourceFile()) {
+		token = scan.getToken();
+		cout << token << endl;
+	}
 
 
 	return 0;
