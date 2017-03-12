@@ -3,6 +3,7 @@
 #include<fstream>
 #include<string>
 #include<cstring>
+#include<cstdlib>
 
 using namespace std;
 
@@ -72,31 +73,36 @@ class TreeNode
 class Scanner
 {
 	public:
-		int setUpFile(char *myFile);
+		Scanner(char*);
+		~Scanner();
+		
 		Token checkOverflow(char *token);
 		Token createNewToken(char *token);
 		Token getToken();
+		Token peek();
+		Token peekFurther();
 		int checkSourceFile();	
 	private:
 		ifstream sourceFile;
 		char cline[100];
 		int lineNumber;
 		int overflow;
+		int peeked;
+		int peekedFurther;
+		Token peekToken;
+		Token peekFurtherToken;
 		char overflowToken[100];
 };
 
-int Scanner::setUpFile(char *myFile)
+Scanner::Scanner(char* myFile)
 {
-	int success = 0;
-	sourceFile.open(myFile);
-	if(sourceFile.is_open()){
-		cout << "File Openned" << endl;
-		lineNumber = 0;
-		overflow = 0;
-		return 0;
-	}else{
-		cout << "Error Opening File" << endl;
-		return -1;
+	this->sourceFile.open(myFile);
+}
+
+Scanner::~Scanner()
+{
+	if(this->sourceFile.is_open()){
+		this->sourceFile.close();
 	}
 }
 
@@ -239,7 +245,13 @@ Token Scanner::getToken()
 	Token newToken;
 	int i;
 
-	if(overflow == 1){
+	if(peeked == 1){
+		peeked = 0;
+		newToken = peekToken;
+	}else if(peekedFurther == 1){
+		peekedFurther = 0;
+		newToken = peekFurtherToken;
+	}else if(overflow == 1){
 		overflow = 0;
 		newToken = createNewToken(overflowToken);
 	}else{
@@ -260,6 +272,22 @@ Token Scanner::getToken()
 	return newToken;
 }
 
+Token Scanner::peek()
+{
+	peekToken = getToken();
+	peeked = 1;
+	
+	return peekToken;
+}
+
+Token Scanner::peekFurther()
+{
+	peekFurtherToken = getToken();
+	peekedFurther = 1;
+	
+	return peekFurtherToken;
+}
+
 int Scanner::checkSourceFile()
 {
 	if(!sourceFile.eof()){
@@ -272,28 +300,31 @@ int Scanner::checkSourceFile()
 
 class Parser
 {
-	public:	
+	public:
 		TreeNode* Parse(Token token);
 
-		TreeNode* programFunc(); //declListFunc
-		TreeNode* declListFunc(); //declListFunc declFunc | declFunc 
-		TreeNode* declFunc(); //varDeclFunc | funDeclFunc
-		TreeNode* varDeclFunc(); //typeSpec ID ; | typeSpec ID [ NUM ] ;
+		Parser(char*);
+		~Parser();
+
+		TreeNode* programFunc(Token token); //declListFunc
+		//TreeNode* declListFunc(); //declListFunc declFunc | declFunc 
+		//TreeNode* declFunc(); //varDeclFunc | funDeclFunc
+		TreeNode* varDeclFunc(Token token); //typeSpec ID ; | typeSpec ID [ NUM ] ;
 		// typeSpec -> int | void
-		TreeNode* funDeclFunc(); //typeSpec ID ( params ) compoundStmt
-		TreeNode* paramsFunc(); //paramListFunc | void
-		TreeNode* paramListFunc(); //paramListFunc, paramFunc | paramFunc
-		TreeNode* paramFunc(); //typeSpec ID | typeSpec ID [ ]
-		TreeNode* compoundStmtFunc(); // { localDeclFunc stmtListFunc }
-		TreeNode* localDeclFunc(); // localDeclFunc varDeclFunc | empty
-		TreeNode* stmtListFunc(); // stmtListFunc stmtFunc | empty
+		TreeNode* funDeclFunc(Token token); //typeSpec ID ( params ) compoundStmt
+		//TreeNode* paramsFunc(); //paramListFunc | void
+		TreeNode* paramsListFunc(Token token); //paramListFunc, paramFunc | paramFunc
+		TreeNode* paramFunc(Token token); //typeSpec ID | typeSpec ID [ ]
+		TreeNode* compoundStmtFunc(Token token); // { localDeclFunc stmtListFunc }
+		TreeNode* localDeclFunc(Token token); // localDeclFunc varDeclFunc | empty
+		TreeNode* stmtListFunc(Token token); // stmtListFunc stmtFunc | empty
 		TreeNode* stmtFunc(); // expressStmtFunc | compoundStmtFunc | selectStmtFunc | iterStmtFunc | returnStmtFunc
 		TreeNode* expressStmtFunc(); //expressionFunc ; | ;
 		TreeNode* selectStmtFunc(); //if ( expressionFunc ) stmtFunc | if ( expressionFunc ) stmtFunc else stmtFunc
 		TreeNode* iterStmtFunc(); //while ( expressionFunc ) stmtFunc
 		TreeNode* returnStmtFunc(); //return ; | return expressionFunc ;
 		TreeNode* expressionFunc(); //varFunc = expressionFunc | simpleExprFunc 
-		TreeNode* varFunc(); //ID | ID [ expressionFunc ]
+		TreeNode* varFunc(Token token); //ID | ID [ expressionFunc ]
 		TreeNode* simpleExprFunc(); //addExprFunc relop addExprFunc | addExprFunc
 		// relop -> <= | < | > | >= | == | !=
 		TreeNode* addExprFunc(); //addExprFun addop termFunc | termFunc
@@ -307,17 +338,44 @@ class Parser
 	
 		TreeNode* root; 
 
+		Scanner* scan;
+
 };
+
+Parser::Parser(char* myFile)
+{
+	this->scan = new Scanner(myFile);
+}
+
+Parser::~Parser()
+{
+	delete this->scan;
+}
 
 TreeNode* Parser::Parse(Token token)
 {
-
+	
 }
 
-TreeNode* Parser::programFunc()
+TreeNode* Parser::programFunc(Token token)
 {
+	TreeNode* newNode;
+	Token peekToken = scan->peek();
+	Token peekFurtherToken = scan->peekFurther();
+
+	newNode->nodeType = PROGRAM;
+	newNode->lineNumber = token.tokenLineNumber;
+
+	if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && ((peekFurtherToken.tokenType == SEMI) || peekFurtherToken.tokenType == LBRACKET))
+		newNode->sibling = varDeclFunc(token);
+	else if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && (peekFurtherToken.tokenType == LPAREN))
+		newNode->sibling = funDeclFunc(token);
+
+	return newNode;
+
 }
 
+/*
 TreeNode* Parser::declListFunc()
 {
 }
@@ -325,36 +383,183 @@ TreeNode* Parser::declListFunc()
 TreeNode* Parser::declFunc()
 {
 }
+*/
 
-TreeNode* Parser::varDeclFunc()
+TreeNode* Parser::varDeclFunc(Token token)
 {
+	TreeNode* newNode;
+	Token newToken;
+	Token peekToken;
+	Token peekFurtherToken;
+
+	newNode->lineNumber = token.tokenLineNumber;
+	newNode->typeSpecifier = token.tokenType;
+
+	newToken = scan->getToken();
+
+	newNode->sValue = token.tokenValue;
+
+	newToken = scan->getToken();
+
+	if(newToken.tokenType == LBRACKET){
+		newNode->nodeType = ARRAY;
+		newToken = scan->getToken();
+		newNode->nValue = atoi(newToken.tokenValue.c_str());
+		newToken = scan->getToken();
+		if(newToken.tokenType == RBRACKET){
+			newToken = scan->getToken();
+			if(newToken.tokenType == SEMI){
+				return newNode;
+			}else{
+				//Error
+			}
+		}else{
+			//Error
+		}
+	}else if(newToken.tokenType == SEMI){
+		newNode->nodeType = VARIABLE;
+		return newNode;
+	}else{
+		//Error
+	}
+
+	peekToken = scan->peek();
+	peekFurtherToken = scan->peekFurther();
+
+	if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && ((peekFurtherToken.tokenType == SEMI) || peekFurtherToken.tokenType == LBRACKET))
+		newNode->sibling = varDeclFunc(token);
+	else if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && (peekFurtherToken.tokenType == LPAREN))
+		newNode->sibling = funDeclFunc(token);
+
+	return newNode;
 }
 
-TreeNode* Parser::funDeclFunc()
+TreeNode* Parser::funDeclFunc(Token token)
 {
+
+	TreeNode* newNode;
+	Token newToken;
+	Token peekToken;
+	Token peekFurtherToken;
+
+	newNode->lineNumber = token.tokenLineNumber;
+	newNode->typeSpecifier = token.tokenType;
+
+	newToken = scan->getToken();
+
+	newNode->sValue = token.tokenValue;
+
+	newToken = scan->getToken();
+
+	if(newToken.tokenType == LPAREN){
+		newNode->nodeType = FUNCTION;
+		newToken = scan->getToken();
+		newNode->C1 = paramsListFunc(newToken);
+		newToken = scan->getToken();
+		if(newToken.tokenType == RPAREN){
+			newToken = scan->getToken();
+			newNode->C2 = compoundStmtFunc(newToken);
+		}else{
+			//ERROR
+		}
+	}else{
+		//ERROR
+	}
+
+	return newNode;
 }
 
+TreeNode* Parser::paramsListFunc(Token token)
+{
+
+	TreeNode* newNode;
+
+	newNode->lineNumber = token.tokenLineNumber;
+	newNode->nodeType = STATEMENT_LIST;
+
+	if(token.tokenType == RPAREN){
+		newNode->typeSpecifier = VOID;
+	}else if(token.tokenType == ID){
+		newNode->sibling = paramFunc(token);
+	}else{
+		//ERROR
+	}
+
+	return newNode;
+}
+
+/*
 TreeNode* Parser::paramsFunc()
 {
 }
+*/
 
-TreeNode* Parser::paramListFunc()
+TreeNode* Parser::paramFunc(Token token)
+{
+	
+	TreeNode* newNode;
+	Token newToken;
+
+	newNode->lineNumber = token.tokenLineNumber;
+
+	if(token.tokenType == INT || token.tokenType == VOID){
+		newNode->typeSpecifier = token.tokenType;
+		newToken = scan->getToken();
+		newNode->sValue = newToken.tokenValue;
+		newToken = scan->getToken();
+
+		if(newToken.tokenType == LBRACKET){
+			newToken = scan->getToken();
+			newNode->nodeType = ARRAY;
+			newNode->nValue = atoi(newToken.tokenValue.c_str());
+			newToken = scan->getToken();
+			if(newToken.tokenType != RBRACKET){
+				//ERROR
+			}
+			newToken = scan->getToken();
+		}else{
+			newNode->nodeType = VARIABLE;
+		}
+
+		if(newToken.tokenType == COMMA){
+			newToken = scan->getToken();
+			newNode->sibling = paramFunc(newToken);
+		}else{
+			//ERROR
+		}
+	}else{
+		//ERROR
+	}
+
+	return newNode;
+}
+
+TreeNode* Parser::compoundStmtFunc(Token token)
+{
+
+	TreeNode* newNode;
+	Token newToken;
+
+	newNode->lineNumber = token.tokenLineNumber;
+	newNode->nodeType = COMPOUND;
+
+	if(token.tokenType == LBRACE){
+		newToken = scan->getToken();
+		newNode->C1 = localDeclFunc(newToken);
+		newToken = scan->getToken();
+		newNode->C2 = stmtListFunc(newToken);
+	}
+
+	return newNode;
+
+
+}
+
+TreeNode* Parser::localDeclFunc(Token token)
 {
 }
 
-TreeNode* Parser::paramFunc()
-{
-}
-
-TreeNode* Parser::compoundStmtFunc()
-{
-}
-
-TreeNode* Parser::localDeclFunc()
-{
-}
-
-TreeNode* Parser::stmtListFunc()
+TreeNode* Parser::stmtListFunc(Token token)
 {
 }
 
@@ -382,8 +587,14 @@ TreeNode* Parser::expressionFunc()
 {
 }
 
-TreeNode* Parser::varFunc()
+TreeNode* Parser::varFunc(Token token)
 {
+
+	TreeNode* newNode;
+
+	newNode->nodeType = VARIABLE;
+	newNode->lineNumber = token.tokenLineNumber;
+
 }
 
 TreeNode* Parser::simpleExprFunc()
@@ -431,29 +642,22 @@ int checkArguments( int argc, char *argv[], char **myFile)
 
 int main(int argc, char *argv[])
 {
-
-	Scanner scan;
-	Parser parse;
 	char* myFile;
 	Token token;
-
+	
 	if(checkArguments(argc, argv, &myFile) == -1) {
 		return -1;
 	}
 
-	cout << myFile << endl;
+	Parser* parse = new Parser(myFile);
 
-	if(scan.setUpFile(myFile) == -1) {
-		return -1;
-	}
+	cout << myFile << endl;
 	
-	
-	while(scan.checkSourceFile()) {
-		token = scan.getToken();
-		parse.root = parse.Parse(token);
+	while(parse->scan->checkSourceFile()) {
+		token = parse->scan->getToken();
+		//parse.root = parse.Parse(token);
 		cout << token.tokenValue << endl;
 	}
-
 
 	return 0;
 }
