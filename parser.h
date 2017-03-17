@@ -15,6 +15,13 @@
 #include<time.h>
 #include<unistd.h>
 
+/*****
+ * parser.h
+ * Author: Joshua Bowen
+ * Purpose: The parser class utilized a scanner class to read in tokens and place them in a parse tree assuming certain things are true.
+ * If a token is not correct the parser will print an appropriate error.
+*****/
+
 class Parser
 {
 	public:

@@ -15,6 +15,18 @@
 
 using namespace std;
 
+/*****
+ * translator
+ * Author: Joshua Bowen
+ * Purpose: The main program for the translator
+ * This program will take in a sourceFile, tokenize it, make a parse tree from it, then make a Symbol Table
+*****/
+
+/*****
+ * Function: checkArguments
+ * Purpose: checks to make sure there are enough arguments
+*****/
+
 int checkArguments( int argc, char *argv[], char **myFile)
 {
 	if(argc > 2) {
@@ -30,6 +42,11 @@ int checkArguments( int argc, char *argv[], char **myFile)
 	}
 }
 
+/*****
+ * Function: main
+ * Purpose: Main driving function of the Translator
+*****/
+
 int main(int argc, char *argv[])
 {
 	char* myFile;
@@ -43,6 +60,7 @@ int main(int argc, char *argv[])
 
 	cout << myFile << endl;
 	
+	//Run the parse Function
 	parse->Parse();
 
 	cout << "End of File" << endl;

@@ -5,6 +5,13 @@
 
 using namespace std;
 
+/*****
+ * treenode.h
+ * Author: Joshua Bowen
+ * Purpose: This object represents a singular node in a Parse Tree.
+ * This node is referenced and stores data given to it by the Parser
+*****/
+
 class TreeNode 
 {
 	public: 
