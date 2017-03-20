@@ -62,8 +62,9 @@ int main(int argc, char *argv[])
 	
 	//Run the parse Function
 	parse->Parse();
-
 	cout << "End of File" << endl;
+	
+	parse->printParseTree();
 
 	return 0;
 }

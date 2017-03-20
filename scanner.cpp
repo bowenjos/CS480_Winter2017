@@ -237,9 +237,6 @@ Token Scanner::getToken()
 		newToken = createNewToken(token);
 	}
 
-	cout << newToken.tokenValue << endl;
-	usleep(50000);
-
 	return newToken;
 }
 
@@ -251,7 +248,6 @@ Token Scanner::getToken()
 
 Token Scanner::peek()
 {
-	cout << "peek: ";
 	peekToken = getToken();
 	peeked = 1;
 	
@@ -267,7 +263,6 @@ Token Scanner::peek()
 
 Token Scanner::peekFurther()
 {
-	cout << "peekFurther: ";
 	ignorePeek = 1;
 	peekFurtherToken = getToken();
 	peekedFurther = 1;

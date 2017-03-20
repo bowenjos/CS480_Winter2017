@@ -25,11 +25,14 @@
 class Parser
 {
 	public:
-		TreeNode* Parse(); //Start Parser
-
 		Parser(char*);
 		~Parser();
 
+		TreeNode* Parse(); //Start Parser
+		void printParseTree(); //Print resulint Parse tree
+		void printNode(TreeNode* currentNode);
+
+	private:
 		TreeNode* programFunc(Token token); //declListFunc
 		TreeNode* varDeclFunc(Token token); //typeSpec ID ; | typeSpec ID [ NUM ] ;
 		// typeSpec -> int | void
@@ -58,11 +61,10 @@ class Parser
 		// mulop -> * | /
 		TreeNode* argsFunc(Token token); //argsListFunc | empty
 		TreeNode* argsListFunc(Token token); //argsListFunc , expressionFunc | expressionFunc
-	
+
 		TreeNode* root; 
-
 		Scanner* scan;
-
+		ofstream parseTreeFile;
 };
 
 #endif

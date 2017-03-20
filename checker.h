@@ -1,34 +1,37 @@
 #ifndef _CHECKER_H
 #define _CHECKER_H
 
+#include "enum.h"
+#include "treenode.h"
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<iostream>
 #include<fstream>
 #include<string>
 #include<cstring>
+#include<vector>
+
+using namespace std;
 
 /*****
  * checker.h
  * Author: Joshua Bowen
  * Purpose: This generates a symbol table that is used by the code generator (Which will not exist)
- * This file contains the symbol and table structs, as well as the checker class
+ * This file contains the SymbolTable struct, as well as the checker class
 *****/
 
 typedef struct
 {
-	string name;
-	int type;
-	int size;
-	Symbol* sibling;
+	string ID; //Variable name
+	int entryType; // variable, array, etc.
+	int dataType; // INT or VOID
+	int blockLevel; // The scope of the current item
+	TreeNode* parameterList; //Just copied from the syntax tree
+	int returnType; //For functions, either INT or VOID
+	int arrayMax; //Size of an array
+	string rename; //Each variable is given a unique name
 } Symbol;
-
-typedef struct
-{
-	Table* parent;
-	Symbol* originSymbol;
-	Table children[];
-} SymbolTable;
 
 class Checker
 {
@@ -36,13 +39,21 @@ class Checker
 		Checker();
 		~Checker();
 
-		void insertSymbolTable(string name, int type, int size, SymbolTable currentTable);
-		Symbol checkSymbolTable(Symbol symbol, SymbolTable currentTable);
-	
+		vector<Symbol> check(TreeNode root);
+		void checkNode(int insertOrCheck);
+		void insertSymbolTable(string name, int incomingEntryType, int incomingDataType, TreeNode* parameterList, int incomingArrayMax);
+		int checkForSymbol(Symbol symbol);
+		vector<Symbol> getGlobalTable();
+		vector<Symbol> getLocalTable();
+		void increaseBlockLevel();
+		void decreaseBlockLevel();
+		void printSymbolTable();
+
 	private:
-
-		SymbolTable* globalTable;
-		SymbolTable* currentTable;
-
+		vector<Symbol> localTable;
+		vector<Symbol> globalTable;
+		int globalBlockLevel;
+		TreeNode* root;
 };
 
+#endif
