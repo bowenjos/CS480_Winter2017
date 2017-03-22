@@ -285,5 +285,3 @@ int Scanner::checkSourceFile()
 		return 0;
 	}
 }
-
-

@@ -3,6 +3,7 @@
 #include"enum.h"
 #include"scanner.h"
 #include"parser.h"
+#include"checker.h"
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -51,20 +52,24 @@ int main(int argc, char *argv[])
 {
 	char* myFile;
 	Token token;
+	TreeNode* root;
 	
 	if(checkArguments(argc, argv, &myFile) == -1) {
 		return -1;
 	}
 
 	Parser* parse = new Parser(myFile);
+	Checker* check = new Checker();
 
 	cout << myFile << endl;
 	
 	//Run the parse Function
-	parse->Parse();
+	root = parse->Parse();
 	cout << "End of File" << endl;
-	
+
+	check->check(root);
 	parse->printParseTree();
+	check->printSymbolTable();
 
 	return 0;
 }

@@ -10,4 +10,3 @@ TreeNode::TreeNode()
 	rename = "NULL";
 	visited = 0;
 }
-

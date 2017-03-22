@@ -10,6 +10,7 @@
 
 enum 
 {
+	NOTHING,
 	_EOF,
 	ERROR,
 	ELSE,

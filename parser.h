@@ -61,6 +61,8 @@ class Parser
 		// mulop -> * | /
 		TreeNode* argsFunc(Token token); //argsListFunc | empty
 		TreeNode* argsListFunc(Token token); //argsListFunc , expressionFunc | expressionFunc
+		
+		string enumToString(int enumValue);
 
 		TreeNode* root; 
 		Scanner* scan;

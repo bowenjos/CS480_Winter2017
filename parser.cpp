@@ -33,11 +33,11 @@ void Parser::printParseTree()
 
 void Parser::printNode(TreeNode* currentNode)
 {
-	parseTreeFile << "Node Type: " << currentNode->nodeType << endl;
+	parseTreeFile << "Node Type: " << enumToString(currentNode->nodeType) << endl;
 	parseTreeFile << "Line Number: " << currentNode->lineNumber << endl;
 	parseTreeFile << "Name: " << currentNode->sValue << endl;
 	parseTreeFile << "Value: " << currentNode->nValue << endl;
-	parseTreeFile << "Data Type: " << currentNode->typeSpecifier << endl;
+	parseTreeFile << "Data Type: " << enumToString(currentNode->typeSpecifier) << endl;
 	parseTreeFile << endl;
 
 	if(currentNode->C1 != nullptr){
@@ -96,7 +96,7 @@ TreeNode* Parser::varDeclFunc(Token token)
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->typeSpecifier = token.tokenType;
 	newToken = scan->getToken();
-	newNode->sValue = token.tokenValue;
+	newNode->sValue = newToken.tokenValue;
 	newToken = scan->getToken();
 	newNode->C1 = NULL;
 	newNode->C2 = NULL;
@@ -133,9 +133,9 @@ TreeNode* Parser::varDeclFunc(Token token)
 	peekFurtherToken = scan->peekFurther();
 
 	if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && ((peekFurtherToken.tokenType == SEMI) || peekFurtherToken.tokenType == LBRACKET))
-		newNode->sibling = varDeclFunc(token);
+		newNode->sibling = varDeclFunc(newToken);
 	else if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && (peekFurtherToken.tokenType == LPAREN))
-		newNode->sibling = funDeclFunc(token);
+		newNode->sibling = funDeclFunc(newToken);
 
 	return newNode;
 }
@@ -150,7 +150,7 @@ TreeNode* Parser::funDeclFunc(Token token)
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->typeSpecifier = token.tokenType;
 	newToken = scan->getToken();
-	newNode->sValue = token.tokenValue;
+	newNode->sValue = newToken.tokenValue;
 	newToken = scan->getToken();
 	newNode->C3 = NULL;
 
@@ -176,7 +176,7 @@ TreeNode* Parser::funDeclFunc(Token token)
 		return newNode;
 	}else{
 		newToken = scan->getToken();
-		newNode->sibling = funDeclFunc(token);
+		newNode->sibling = funDeclFunc(newToken);
 	}
 
 	return newNode;
@@ -344,6 +344,8 @@ TreeNode* Parser::localVarDeclFunc(Token token)
 			//ERROR
 			cout << "Line Number " << newNode->lineNumber << " ERROR: Array isn't properly closed" << endl;
 		}
+	}else{
+		newNode->nodeType = VARIABLE;
 	}
 	newToken = scan->getToken();
 	if(newToken.tokenType != SEMI){
@@ -691,7 +693,7 @@ TreeNode* Parser::callFunc(Token token)
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->nodeType = CALL;
 
-	newNode->typeSpecifier = VOID; //????
+	newNode->typeSpecifier = 0; //????
 
 	if(token.tokenType != ID){
 		//ERROR
@@ -939,3 +941,16 @@ TreeNode* Parser::argsListFunc(Token token)
 
 }
 
+string Parser::enumToString(int enumValue)
+{
+	string enumString[] = { "NOTHING", "EOF", "ERROR", "ELSE", "IF", "INT", "RETURN",	"VOID",	"WHILE",
+				"PLUS", "MINUS", "MULT", "DIV",	"LS", "LEQ", "GT", "GEQ", "EQ", 
+				"NEQ", "ASSIGN", "SEMI", "COMMA", "LPAREN", "RPAREN", "LBRACKET", 
+				"RBRACKET", "LBRACE", "RBRACE",	"READ", "WRITE", "NUMBER", "ID",
+				"PROGRAM", "DECLARATION", "VARIABLE", "ARRAY", "FUNCTION",
+				"EXPRESSION", "CALL", "COMPOUND", "TYPE_SPECIFIER",	"PARAMETER_LIST",
+				"PARAMETER", "STATEMENT_LIST", "STATEMENT",	"ARGUMENTS", "END" };
+
+	return enumString[enumValue];
+
+}

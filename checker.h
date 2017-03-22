@@ -39,14 +39,16 @@ class Checker
 		Checker();
 		~Checker();
 
-		vector<Symbol> check(TreeNode root);
-		void checkNode(int insertOrCheck);
+		vector<Symbol> check(TreeNode* currentNode);
+		void checkNode(TreeNode* currentNode);
+		int getVarType(string name);
 		void insertSymbolTable(string name, int incomingEntryType, int incomingDataType, TreeNode* parameterList, int incomingArrayMax);
-		int checkForSymbol(Symbol symbol);
+		int checkForSymbol(string name);
 		vector<Symbol> getGlobalTable();
 		vector<Symbol> getLocalTable();
 		void increaseBlockLevel();
 		void decreaseBlockLevel();
+		string enumToString(int enumValue);
 		void printSymbolTable();
 
 	private:
@@ -54,6 +56,8 @@ class Checker
 		vector<Symbol> globalTable;
 		int globalBlockLevel;
 		TreeNode* root;
+		int insertOrCheck;
+		ofstream symbolTableFile;
 };
 
 #endif
