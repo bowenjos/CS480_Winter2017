@@ -1,9 +1,16 @@
 #ifndef _ENUM_H
 #define _ENUM_H
 
+/*****
+ * Enum.h
+ * Author: Joshua Bowen
+ * Purpose: These enums represent assorted Token and Node types. They are used as a variety of checks throughout the Translator
+*****/ 
+
 
 enum 
 {
+	NOTHING,
 	_EOF,
 	ERROR,
 	ELSE,

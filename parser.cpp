@@ -21,25 +21,66 @@ TreeNode* Parser::Parse()
 	return root;
 }
 
+void Parser::printParseTree()
+{
+	parseTreeFile.open("parseTree.txt");	
+	parseTreeFile << "Root" << endl;
+	printNode(root);
+	parseTreeFile.close();
+
+	return;
+}
+
+void Parser::printNode(TreeNode* currentNode)
+{
+	parseTreeFile << "Node Type: " << enumToString(currentNode->nodeType) << endl;
+	parseTreeFile << "Line Number: " << currentNode->lineNumber << endl;
+	parseTreeFile << "Name: " << currentNode->sValue << endl;
+	parseTreeFile << "Value: " << currentNode->nValue << endl;
+	parseTreeFile << "Data Type: " << enumToString(currentNode->typeSpecifier) << endl;
+	parseTreeFile << endl;
+
+	if(currentNode->C1 != nullptr){
+		parseTreeFile << "Child 1" << endl;
+		printNode(currentNode->C1);
+	}
+
+	if(currentNode->C2 != nullptr){
+		parseTreeFile << "Child 2" << endl;
+		printNode(currentNode->C2);
+	}
+
+	if(currentNode->C3 != nullptr){
+		parseTreeFile << "Child 3" << endl;
+		printNode(currentNode->C3);
+	}
+
+	if(currentNode->sibling != nullptr){
+		parseTreeFile << "Sibling" << endl;
+		printNode(currentNode->sibling);
+	}
+
+	return;
+}
+
 TreeNode* Parser::programFunc(Token token)
 {
-	cout << "programFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token peekToken = scan->peek();
 	Token peekFurtherToken = scan->peekFurther();
 
 	newNode->nodeType = 1;
 	newNode->nodeType = PROGRAM;
-	
 	newNode->lineNumber = token.tokenLineNumber;
+	newNode->C1 = NULL;
+	newNode->C2 = NULL;
+	newNode->C3 = NULL;
 
 	if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && ((peekFurtherToken.tokenType == SEMI) || peekFurtherToken.tokenType == LBRACKET)){
 		newNode->sibling = varDeclFunc(token);
 	}else if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && (peekFurtherToken.tokenType == LPAREN)){
 		newNode->sibling = funDeclFunc(token);
 	}
-	
 
 	return newNode;
 
@@ -47,9 +88,6 @@ TreeNode* Parser::programFunc(Token token)
 
 TreeNode* Parser::varDeclFunc(Token token)
 {
-
-	cout << "varDeclFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -57,12 +95,12 @@ TreeNode* Parser::varDeclFunc(Token token)
 
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->typeSpecifier = token.tokenType;
-
 	newToken = scan->getToken();
-
-	newNode->sValue = token.tokenValue;
-
+	newNode->sValue = newToken.tokenValue;
 	newToken = scan->getToken();
+	newNode->C1 = NULL;
+	newNode->C2 = NULL;
+	newNode->C3 = NULL;
 
 	if(newToken.tokenType == LBRACKET){
 		newNode->nodeType = ARRAY;
@@ -95,17 +133,15 @@ TreeNode* Parser::varDeclFunc(Token token)
 	peekFurtherToken = scan->peekFurther();
 
 	if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && ((peekFurtherToken.tokenType == SEMI) || peekFurtherToken.tokenType == LBRACKET))
-		newNode->sibling = varDeclFunc(token);
+		newNode->sibling = varDeclFunc(newToken);
 	else if((token.tokenType == INT || token.tokenType == VOID) && (peekToken.tokenType == ID) && (peekFurtherToken.tokenType == LPAREN))
-		newNode->sibling = funDeclFunc(token);
+		newNode->sibling = funDeclFunc(newToken);
 
 	return newNode;
 }
 
 TreeNode* Parser::funDeclFunc(Token token)
 {
-	cout << "funDeclFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -113,12 +149,10 @@ TreeNode* Parser::funDeclFunc(Token token)
 
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->typeSpecifier = token.tokenType;
-
 	newToken = scan->getToken();
-
-	newNode->sValue = token.tokenValue;
-
+	newNode->sValue = newToken.tokenValue;
 	newToken = scan->getToken();
+	newNode->C3 = NULL;
 
 	if(newToken.tokenType == LPAREN){
 		newNode->nodeType = FUNCTION;
@@ -142,7 +176,7 @@ TreeNode* Parser::funDeclFunc(Token token)
 		return newNode;
 	}else{
 		newToken = scan->getToken();
-		newNode->sibling = funDeclFunc(token);
+		newNode->sibling = funDeclFunc(newToken);
 	}
 
 	return newNode;
@@ -150,12 +184,13 @@ TreeNode* Parser::funDeclFunc(Token token)
 
 TreeNode* Parser::paramsListFunc(Token token)
 {
-	cout << "paramsListFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->nodeType = STATEMENT_LIST;
+	newNode->C1 = NULL;
+	newNode->C2 = NULL;
+	newNode->C3 = NULL;
 
 	if(token.tokenType == VOID || token.tokenType == RPAREN){
 		newNode->typeSpecifier = VOID;
@@ -171,13 +206,14 @@ TreeNode* Parser::paramsListFunc(Token token)
 
 TreeNode* Parser::paramFunc(Token token)
 {
-	cout << "paramFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
 
 	newNode->lineNumber = token.tokenLineNumber;
+	newNode->C1 = NULL;
+	newNode->C2 = NULL;
+	newNode->C3 = NULL;
 
 	if(token.tokenType == INT || token.tokenType == VOID){
 		newNode->typeSpecifier = token.tokenType;
@@ -218,13 +254,13 @@ TreeNode* Parser::paramFunc(Token token)
 
 TreeNode* Parser::compoundStmtFunc(Token token)
 {
-	cout << "compoundStmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->nodeType = COMPOUND;
+	newNode->C3 = NULL;
+	newNode->sibling = NULL;
 
 	if(token.tokenType == LBRACE){
 		newToken = scan->getToken();
@@ -245,21 +281,20 @@ TreeNode* Parser::compoundStmtFunc(Token token)
 		cout << "Line Number " << newNode->lineNumber << " ERROR: Missing a Right Brace" << endl;
 	}
 
-	cout << "Leaving compoundStmtFunc" << endl;
 	return newNode;
-
 }
 
 TreeNode* Parser::localDeclFunc(Token token)
 {
-	cout << "localDeclFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
 
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->nodeType = DECLARATION;
+	newNode->C1 = NULL;
+	newNode->C2 = NULL;
+	newNode->C3 = NULL;
 
 	if(token.tokenType == VOID || token.tokenType == INT){
 		newNode->sibling = localVarDeclFunc(token);
@@ -268,19 +303,19 @@ TreeNode* Parser::localDeclFunc(Token token)
 	}
 
 	return newNode;
-
 }
 
 TreeNode* Parser::localVarDeclFunc(Token token)
 {
-	cout << "localVarDeclFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
 
 	newNode->lineNumber = token.tokenLineNumber;
-	
+	newNode->C1 = NULL;
+	newNode->C2 = NULL;
+	newNode->C3 = NULL;
+
 	if(token.tokenType == INT || token.tokenType == VOID){
 		newNode->typeSpecifier = token.tokenType;
 	}else{
@@ -309,6 +344,8 @@ TreeNode* Parser::localVarDeclFunc(Token token)
 			//ERROR
 			cout << "Line Number " << newNode->lineNumber << " ERROR: Array isn't properly closed" << endl;
 		}
+	}else{
+		newNode->nodeType = VARIABLE;
 	}
 	newToken = scan->getToken();
 	if(newToken.tokenType != SEMI){
@@ -327,8 +364,6 @@ TreeNode* Parser::localVarDeclFunc(Token token)
 
 TreeNode* Parser::stmtListFunc(Token token)
 {
-	cout << "stmtListFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -366,13 +401,10 @@ TreeNode* Parser::stmtListFunc(Token token)
 	}
 
 	return newNode;
-
 }
 
 TreeNode* Parser::stmtFunc(Token token)
 {
-	cout << "stmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -405,13 +437,10 @@ TreeNode* Parser::stmtFunc(Token token)
 		//ERROR
 		cout << "Line Number " << newNode->lineNumber << " ERROR: Statement written is not a valid statement type" << endl;
 	}
-
 }
 
 TreeNode* Parser::selectStmtFunc(Token token)
 {
-	cout << "selectStmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -447,22 +476,17 @@ TreeNode* Parser::selectStmtFunc(Token token)
 	
 	peekToken = scan->peek();
 	if(peekToken.tokenType == RBRACE){
-		cout << "Leaving selectStmtFunc" << endl;
 		return newNode;
 	}
 	
 	newToken = scan->getToken();
 	newNode->sibling = stmtFunc(newToken);
 
-
-	cout << "Leaving selectStmtFunc" << endl;
 	return newNode;
 }
 
 TreeNode* Parser::iterStmtFunc(Token token)
 {
-	cout << "iterStmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -498,14 +522,11 @@ TreeNode* Parser::iterStmtFunc(Token token)
 	newToken = scan->getToken();
 	newNode->sibling = stmtFunc(newToken);
 
-	cout << "Leaving iterStmtFunc" << endl;
 	return newNode;
 }
 
 TreeNode* Parser::returnStmtFunc(Token token)
 {
-	cout << "returnStmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -539,8 +560,6 @@ TreeNode* Parser::returnStmtFunc(Token token)
 
 TreeNode* Parser::readStmtFunc(Token token)
 {
-	cout << "readStmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -573,8 +592,6 @@ TreeNode* Parser::readStmtFunc(Token token)
 
 TreeNode* Parser::writeStmtFunc(Token token)
 {
-	cout << "writeStmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -592,8 +609,6 @@ TreeNode* Parser::writeStmtFunc(Token token)
 		//ERROR
 		cout << "Line Number " << newNode->lineNumber << " ERROR: Missing parenthesis" << endl;
 	}
-
-	cout << "Here" << endl;
 
 	newToken = scan->getToken();
 	peekToken = scan->peek();
@@ -626,8 +641,6 @@ TreeNode* Parser::writeStmtFunc(Token token)
 
 TreeNode* Parser::callStmtFunc(Token token)
 {
-	cout << "callStmtFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -673,8 +686,6 @@ TreeNode* Parser::callStmtFunc(Token token)
 
 TreeNode* Parser::callFunc(Token token)
 {
-	cout << "callFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -682,7 +693,7 @@ TreeNode* Parser::callFunc(Token token)
 	newNode->lineNumber = token.tokenLineNumber;
 	newNode->nodeType = CALL;
 
-	newNode->typeSpecifier = VOID; //????
+	newNode->typeSpecifier = 0; //????
 
 	if(token.tokenType != ID){
 		//ERROR
@@ -707,8 +718,6 @@ TreeNode* Parser::callFunc(Token token)
 
 TreeNode* Parser::gainFunc(Token token)
 {
-	cout << "gainFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -743,15 +752,11 @@ TreeNode* Parser::gainFunc(Token token)
 		newNode->sibling = stmtFunc(newToken);
 	}
 
-	cout << "Leaving gainFunc" << endl;
 	return newNode;
-
 }
 
 TreeNode* Parser::varFunc(Token token)
 {
-	cout << "varFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -780,15 +785,11 @@ TreeNode* Parser::varFunc(Token token)
 		newNode->nodeType = VARIABLE;
 	}
 
-	cout << "leaving varFunc" << endl;
-
 	return newNode;
 }
 
 TreeNode* Parser::compareExprFunc(Token token)
 {
-	cout << "compareExprFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -805,9 +806,6 @@ TreeNode* Parser::compareExprFunc(Token token)
 
 TreeNode* Parser::expressionFunc(Token token)
 {
-
-	cout << "expressionFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -831,9 +829,8 @@ TreeNode* Parser::expressionFunc(Token token)
 
 	if((peekToken.tokenType != PLUS) && (peekToken.tokenType != MINUS) && (peekToken.tokenType != MULT) && (peekToken.tokenType != DIV)){
 		//ERROR
-		cout << "Exit expressionFunc" << endl;
 		return tempNode;
-		cout << "Line Number " << newNode->lineNumber << " ERROR: Not a valid operand" << endl;
+		//cout << "Line Number " << newNode->lineNumber << " ERROR: Not a valid operand" << endl;
 	}
 	newToken = scan->getToken();
 	newNode->C1 = tempNode;
@@ -854,16 +851,12 @@ TreeNode* Parser::expressionFunc(Token token)
 			newNode->C2 = numberFunc(newToken);
 		}
 	}
-	cout << "Exit expressionFunc" << endl;
-	return newNode;
 
+	return newNode;
 }
 
 TreeNode* Parser::numberFunc(Token token)
 {
-
-	cout << "numberFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 
@@ -881,8 +874,6 @@ TreeNode* Parser::numberFunc(Token token)
 
 TreeNode* Parser::argsFunc(Token token)
 {
-	cout << "argsFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 	Token newToken;
 	Token peekToken;
@@ -905,7 +896,8 @@ TreeNode* Parser::argsFunc(Token token)
 	}else if(token.tokenType == ID){
 		peekToken = scan->peek();
 		if(peekToken.tokenType == LBRACKET){
-			newNode->nodeType == ARRAY;
+			newNode->nodeType = ARRAY;
+			newNode->sValue = token.tokenValue;
 			newToken = scan->getToken();
 			newToken = scan->getToken();
 			//REVISIT
@@ -917,7 +909,8 @@ TreeNode* Parser::argsFunc(Token token)
 			}
 			peekToken = scan->peek();
 		}else if(peekToken.tokenType == COMMA){
-			newNode->nodeType == VARIABLE;
+			newNode->nodeType = VARIABLE;
+			newNode->sValue = token.tokenValue;
 		}
 
 		if(peekToken.tokenType == COMMA){
@@ -925,22 +918,18 @@ TreeNode* Parser::argsFunc(Token token)
 			newToken = scan->getToken();
 			newNode->sibling = argsFunc(newToken);
 		}else if(peekToken.tokenType == RPAREN){
-			cout << "Leaving argsFunc" << endl;
 			return newNode;
 		}
 	}else{
 		//ERROR
 		cout << "Line Number " << newNode->lineNumber << " ERROR: there is something wrng with your arguments" << endl;
 	}
-	cout << "Leaving argsFunc" << endl;
-
+	
 	return newNode;
 }
 
 TreeNode* Parser::argsListFunc(Token token)
 {
-	cout << "argsListFunc" << endl;
-
 	TreeNode* newNode = new TreeNode();
 
 	newNode->lineNumber = token.tokenLineNumber;
@@ -952,3 +941,16 @@ TreeNode* Parser::argsListFunc(Token token)
 
 }
 
+string Parser::enumToString(int enumValue)
+{
+	string enumString[] = { "NOTHING", "EOF", "ERROR", "ELSE", "IF", "INT", "RETURN",	"VOID",	"WHILE",
+				"PLUS", "MINUS", "MULT", "DIV",	"LS", "LEQ", "GT", "GEQ", "EQ", 
+				"NEQ", "ASSIGN", "SEMI", "COMMA", "LPAREN", "RPAREN", "LBRACKET", 
+				"RBRACKET", "LBRACE", "RBRACE",	"READ", "WRITE", "NUMBER", "ID",
+				"PROGRAM", "DECLARATION", "VARIABLE", "ARRAY", "FUNCTION",
+				"EXPRESSION", "CALL", "COMPOUND", "TYPE_SPECIFIER",	"PARAMETER_LIST",
+				"PARAMETER", "STATEMENT_LIST", "STATEMENT",	"ARGUMENTS", "END" };
+
+	return enumString[enumValue];
+
+}

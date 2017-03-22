@@ -15,6 +15,12 @@
 
 using namespace std;
 
+/*****
+ * Scanner.h
+ * Author: Joshua Bowen
+ * Purpose: This scanner class function is to read in a source file and tokenize it
+*****/
+
 class Scanner
 {
 	public:
